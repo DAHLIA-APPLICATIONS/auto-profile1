@@ -1,24 +1,37 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { useApp } from '@/contexts/AppContext';
-import { User, Calendar, MapPin, Phone, Mail, Users, GraduationCap, Briefcase, Award, Settings, RotateCcw } from 'lucide-react';
+import { User, Calendar, MapPin, Phone, Mail, Users, GraduationCap, Briefcase, Award, Settings, RotateCcw, AlertTriangle } from 'lucide-react';
 
 export default function DashboardPage() {
   const router = useRouter();
   const { state, resetAll } = useApp();
+  const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
   const { profile, services } = state;
 
   const connectedServices = services.filter(service => service.connected);
   
   const handleReset = () => {
-    if (confirm('全ての入力内容がリセットされます。よろしいですか？')) {
-      resetAll();
-      router.push('/');
-    }
+    resetAll();
+    setIsResetDialogOpen(false);
+    // リセット後はホームページに戻る
+    router.push('/');
   };
 
   const formatDate = (dateString: string) => {
@@ -37,14 +50,47 @@ export default function DashboardPage() {
     <div className="max-w-4xl mx-auto space-y-8">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">ダッシュボード</h1>
-        <Button
-          onClick={handleReset}
-          variant="destructive"
-          className="flex items-center space-x-1 text-sm px-3 py-2"
-        >
-          <RotateCcw className="h-3 w-3" />
-          <span>最初からやり直す</span>
-        </Button>
+        <AlertDialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="destructive"
+              className="flex items-center space-x-1 text-sm px-3 py-2"
+            >
+              <RotateCcw className="h-3 w-3" />
+              <span>最初からやり直す</span>
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center space-x-2">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+                <span>データの初期化</span>
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-left space-y-2">
+                <p>以下のデータが完全に削除されます：</p>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  <li>プロフィール情報（氏名、住所、連絡先など）</li>
+                  <li>学歴情報（{profile.educations.length}件）</li>
+                  <li>職歴情報（{profile.workHistories.length}件）</li>
+                  <li>資格・免許情報（{profile.qualifications.length}件）</li>
+                  <li>サービス連携設定（{connectedServices.length}件連携中）</li>
+                </ul>
+                <p className="font-medium text-red-600 mt-3">
+                  この操作は取り消すことができません。本当に実行しますか？
+                </p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>キャンセル</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleReset}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                すべて削除する
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       {/* プロフィール情報 */}
